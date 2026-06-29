@@ -14,7 +14,7 @@ namespace clob
             std::vector<Trade> add_order(Order order);
 
             void cancel_order(OrderId id);
-        
+
         private:
             // helper for the Id lookup map
             struct OrderEntry {
@@ -23,10 +23,12 @@ namespace clob
             };
 
             // Bids: Price -> List of Orders (Highest price first)
-            std::map<Price, Quantity, std::greater<Price>> bids;
-            
+            // std::map<Price, OrderPointers, std::greater<Price>> bids;
+            std::map<Price, OrderPointers> bids; // for fast compile, to change later
+
             // Asks: Price -> List of Orders (Lowest price first)
-            std::map<Price, Quantity, std::less<Price>> asks;
+            // std::map<Price, OrderPointers, std::less<Price>> asks;
+            std::map<Price, OrderPointers> asks; // for fast compile, to change later
 
             // Instant lookup
             std::unordered_map<OrderId, OrderEntry> id_map;

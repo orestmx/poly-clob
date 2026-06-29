@@ -1,5 +1,51 @@
-/.DS_Store
+# ---- C/C++ build artifacts ----
+*.o
+*.obj
+*.d
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+
+# Built binary from the Makefile
+/clob/simulator
+# Generic build output directories (CMake, etc.)
+build/
+cmake-build-*/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+
+# Debug symbols / crash dumps
+*.dSYM/
+*.pdb
+core
+*.stackdump
+
+# ---- OS junk ----
+**/.DS_Store
+Thumbs.db
+
+# ---- Editor / IDE ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---- Secrets & local config ----
 /.env
-/__pycache__
+*.env
+
+# ---- Python ----
+__pycache__/
+*.pyc
+
+# ---- Data & misc ----
 /data
 /misalanious.txt
