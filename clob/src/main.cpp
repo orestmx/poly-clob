@@ -2,10 +2,10 @@
 #include <iostream>
 
 int main() {
-    poly::OrderBook book;
+    clob::OrderBook book;
     
     // Create a sample order: Buy 10 shares at $0.50 (500,000 units)
-    poly::Order myOrder{1, poly::Side::Buy, 500000, 10};
+    clob::Order myOrder{1, clob::Side::Buy, 500000, 10};
     
     auto trades = book.add_order(myOrder);
     
