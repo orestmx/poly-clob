@@ -11,7 +11,13 @@ namespace clob
 {
     class OrderBook {
         public:
+            template <typename BookSide>
+            std::vector<Trade> match_side(OrderPointer taker, BookSide& book);
+
             std::vector<Trade> add_order(Order order);
+
+            template <typename BookSide>
+            void rest_order(OrderPointer order, BookSide& book);
 
             void cancel_order(OrderId id);
 
@@ -23,12 +29,10 @@ namespace clob
             };
 
             // Bids: Price -> List of Orders (Highest price first)
-            // std::map<Price, OrderPointers, std::greater<Price>> bids;
-            std::map<Price, OrderPointers> bids; // for fast compile, to change later
+            std::map<Price, OrderPointers, std::greater<Price>> bids;
 
             // Asks: Price -> List of Orders (Lowest price first)
-            // std::map<Price, OrderPointers, std::less<Price>> asks;
-            std::map<Price, OrderPointers> asks; // for fast compile, to change later
+            std::map<Price, OrderPointers, std::less<Price>> asks;
 
             // Instant lookup
             std::unordered_map<OrderId, OrderEntry> id_map;
