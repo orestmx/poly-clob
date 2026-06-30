@@ -1,6 +1,7 @@
 #include "OrderBook.hpp"
 #include <algorithm>
 #include <iostream>
+#include <optional>
 
 namespace clob {
 
@@ -19,6 +20,30 @@ namespace clob {
         default:
             return{};
         }
+    }
+
+    void OrderBook::cancel_order(OrderId id) {
+        auto it = id_map.find(id);
+        if (it == id_map.end()) return;
+
+        const OrderEntry& entry = it->second;
+        if (entry.pointer->side == Side::Buy) remove_order(entry, bids);
+        else remove_order(entry, asks);
+
+        id_map.erase(it);
+    }
+
+    template <typename BookSide>
+    void OrderBook::remove_order(const OrderEntry& entry, BookSide& book) {
+        const Price price = entry.pointer->price;
+
+        auto level = book.find(price);
+        if (level == book.end()) return;
+
+        auto& order_list = level->second;
+        order_list.erase(entry.position);
+
+        if (order_list.empty()) book.erase(level);
     }
 
     std::vector<Trade> OrderBook::execute_market_order(OrderPointer order) {
@@ -96,5 +121,29 @@ namespace clob {
         return trades;
     }
 
+    std::optional<Price> OrderBook::best_bid() const {
+        if (bids.empty()) return std::nullopt;
+        return bids.begin()->first;
+    }
 
+    std::optional<Price> OrderBook::best_ask() const {
+        if (asks.empty()) return std::nullopt;
+        return asks.begin()->first;
+    }
+
+    void OrderBook::print_book() const {
+        std::cout << "----- ASKS (low -> high) -----\n";
+        // print asks high-to-low so the spread sits in the middle, like a real ladder
+        for (auto it = asks.rbegin(); it != asks.rend(); ++it) {
+            Quantity level_qty = 0;
+            for (const auto& o : it->second) level_qty += o->remaining_quantity;
+            std::cout << "  " << it->first << " x " << level_qty << "\n";
+        }
+        std::cout << "----- BIDS (high -> low) -----\n";
+        for (const auto& [price, list] : bids) {
+            Quantity level_qty = 0;
+            for (const auto& o : list) level_qty += o->remaining_quantity;
+            std::cout << "  " << price << " x " << level_qty << "\n";
+        }
+    }
 }

@@ -47,14 +47,20 @@ Requires a C++20 compiler (clang or gcc).
 
 ```bash
 cd clob
-clang++ -std=c++20 -O3 -Wall -Wextra \
-  src/main.cpp \
-  src/engine/OrderBook.cpp \
-  -I src \
-  -o simulator
-
-./simulator
+make            # builds ./simulator (incremental — only rebuilds changed files)
+./simulator     # runs the test suite
+make clean      # removes the binary and object files
 ```
+
+<details>
+<summary>Building without make</summary>
+
+```bash
+cd clob
+clang++ -std=c++20 -O3 -Wall -Wextra \
+  src/main.cpp src/engine/OrderBook.cpp -I src -o simulator
+```
+</details>
 
 > A proper CMake build is planned (see roadmap).
 

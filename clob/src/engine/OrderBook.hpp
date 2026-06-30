@@ -3,7 +3,7 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
-#include <vector>
+#include <optional>
 
 #include "Order.hpp"
 
@@ -11,15 +11,12 @@ namespace clob
 {
     class OrderBook {
         public:
-            template <typename BookSide>
-            std::vector<Trade> match_side(OrderPointer taker, BookSide& book);
-
             std::vector<Trade> add_order(Order order);
-
-            template <typename BookSide>
-            void rest_order(OrderPointer order, BookSide& book);
-
             void cancel_order(OrderId id);
+
+            std::optional<Price> best_bid() const;
+            std::optional<Price> best_ask() const;
+            void print_book() const;
 
         private:
             // helper for the Id lookup map
@@ -41,5 +38,14 @@ namespace clob
             std::vector<Trade> execute_gtc_order(OrderPointer order);
             std::vector<Trade> execute_market_order(OrderPointer order);
             std::vector<Trade> match_against_book(OrderPointer order);
+
+            template <typename BookSide>
+            std::vector<Trade> match_side(OrderPointer taker, BookSide& book);
+
+            template <typename BookSide>
+            void rest_order(OrderPointer order, BookSide& book);
+
+            template <typename BookSide>
+            void remove_order(const OrderEntry& entry, BookSide& book);
     };
 }
