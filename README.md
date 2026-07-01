@@ -1,5 +1,7 @@
 # poly-clob
 
+[![CI](https://github.com/orestmx/poly-clob/actions/workflows/ci.yml/badge.svg)](https://github.com/orestmx/poly-clob/actions/workflows/ci.yml)
+
 A central limit order book (CLOB) and matching engine written in modern C++ (C++20).
 
 The goal is a fast, well-tested matching engine that can be used as a **simulation venue for testing market-making bots**. It targets [Polymarket](https://polymarket.com) first, but the core is exchange-agnostic so other venues can be added through thin adapters.
@@ -43,34 +45,36 @@ Core concepts:
 
 ## Build & run
 
-Requires a C++20 compiler (clang or gcc).
+Requires a C++20 compiler (clang or gcc) and CMake ≥ 3.16.
+
+### CMake (builds the app + tests; fetches GoogleTest automatically)
+
+```bash
+cmake -S clob -B clob/build                        # configure (downloads GoogleTest on first run)
+cmake --build clob/build                           # build simulator + unit_tests
+ctest --test-dir clob/build --output-on-failure    # run the test suite
+./clob/build/simulator                             # run the demo
+```
+
+This is what CI runs, and it needs no system GoogleTest install.
+
+### Make (quick iteration on the engine)
 
 ```bash
 cd clob
-make            # builds ./simulator (incremental — only rebuilds changed files)
-./simulator     # runs the test suite
-make clean      # removes the binary and object files
+make            # builds ./simulator
+./simulator     # runs the demo
+make test       # builds and runs the GoogleTest suite (requires GoogleTest installed locally)
+make clean      # removes binaries and object files
 ```
-
-<details>
-<summary>Building without make</summary>
-
-```bash
-cd clob
-clang++ -std=c++20 -O3 -Wall -Wextra \
-  src/main.cpp src/engine/OrderBook.cpp -I src -o simulator
-```
-</details>
-
-> A proper CMake build is planned (see roadmap).
 
 ## Roadmap
 
 - [x] **Core matching engine** — price-time priority, partial fills, GTC orders.
 - [x] **All order types** — IOC, FOK, Market.
 - [x] **Cancel / modify** orders via the id lookup table.
-- [ ] **Unit test suite** (GoogleTest) covering matching, partial fills, FIFO ordering, and edge cases.
-- [ ] **CMake build** and CI (GitHub Actions: build + test on push).
+- [x] **Unit test suite** (GoogleTest) covering matching, partial fills, FIFO ordering, and edge cases.
+- [x] **CMake build** and CI (GitHub Actions: build + test on push, gcc & clang).
 - [ ] **Exchange-agnostic feed interface** — a `MarketDataSource` abstraction.
 - [ ] **Polymarket adapter** — replay recorded L2 data into the engine.
 - [ ] **Market-making test harness** — a `Strategy` interface and backtest loop with PnL / inventory / fill metrics.
