@@ -176,6 +176,19 @@ namespace clob {
         return asks.begin()->first;
     }
 
+    Quantity OrderBook::volume_at(Side side, Price price) const {
+        return (side == Side::Buy) ? volume_in_book(bids, price) : volume_in_book(asks, price);
+    }
+
+    template <typename BookSide>
+    Quantity OrderBook::volume_in_book(BookSide book, Price price) const {
+        auto it = book.find(price);
+        if (it == book.end()) return 0;
+        Quantity volume = 0;
+        for (const auto& o : it->second) volume += o->remaining_quantity;
+        return volume;
+    }
+
     void OrderBook::print_book() const {
         std::cout << "----- ASKS (low -> high) -----\n";
         // print asks high-to-low so the spread sits in the middle, like a real ladder

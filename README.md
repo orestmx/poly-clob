@@ -67,9 +67,9 @@ clang++ -std=c++20 -O3 -Wall -Wextra \
 ## Roadmap
 
 - [x] **Core matching engine** — price-time priority, partial fills, GTC orders.
-- [ ] **All order types** — IOC, FOK, Market.
+- [x] **All order types** — IOC, FOK, Market.
 - [x] **Cancel / modify** orders via the id lookup table.
-- [ ] **Unit test suite** (GoogleTest or Catch2) covering matching, partial fills, FIFO ordering, and edge cases.
+- [ ] **Unit test suite** (GoogleTest) covering matching, partial fills, FIFO ordering, and edge cases.
 - [ ] **CMake build** and CI (GitHub Actions: build + test on push).
 - [ ] **Exchange-agnostic feed interface** — a `MarketDataSource` abstraction.
 - [ ] **Polymarket adapter** — replay recorded L2 data into the engine.

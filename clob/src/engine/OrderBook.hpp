@@ -6,6 +6,7 @@
 #include <optional>
 
 #include "Order.hpp"
+#include "engine/Types.hpp"
 
 namespace clob
 {
@@ -16,6 +17,7 @@ namespace clob
 
             std::optional<Price> best_bid() const;
             std::optional<Price> best_ask() const;
+            Quantity volume_at(Side side, Price price) const;
             void print_book() const;
 
         private:
@@ -54,5 +56,8 @@ namespace clob
             bool has_liquidity(const OrderPointer& order, const BookSide& book) const;
 
             bool can_fully_fill(const OrderPointer& order) const;
+
+            template <typename BookSide>
+            Quantity volume_in_book(BookSide book, Price price) const;
     };
 }

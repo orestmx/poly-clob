@@ -49,3 +49,4 @@ __pycache__/
 # ---- Data & misc ----
 /data
 /misalanious.txt
+/.claude

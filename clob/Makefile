@@ -14,6 +14,25 @@ $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(TARGET) $(OBJS)
+	rm -f $(TARGET) $(OBJS) $(TEST_TARGET) $(TEST_OBJS)
 
-.PHONY: clean
+# ---------------- Tests (arm64 GoogleTest from native Homebrew at /opt/homebrew) ----------------
+# -I (not -isystem) so the arm64 headers win over the Intel gtest in /usr/local/include;
+# -Wno-character-conversion silences a warning inside gtest's own headers.
+GTEST_CFLAGS := -I/opt/homebrew/include -Wno-character-conversion
+GTEST_LIBS   := -L/opt/homebrew/lib -lgtest -lgtest_main
+
+TEST_TARGET := run_tests
+TEST_SRCS   := tests/test_orderbook.cpp src/engine/OrderBook.cpp
+TEST_OBJS   := $(TEST_SRCS:.cpp=.test.o)
+
+$(TEST_TARGET): $(TEST_OBJS)
+	$(CXX) $(CXXFLAGS) -o $@ $(TEST_OBJS) $(GTEST_LIBS)
+
+%.test.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(GTEST_CFLAGS) -c $< -o $@
+
+test: $(TEST_TARGET)
+	./$(TEST_TARGET)
+
+.PHONY: clean test
