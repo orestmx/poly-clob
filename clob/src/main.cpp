@@ -154,6 +154,97 @@ static void test_cancel_bid_side() {
     check(book.best_bid() == std::nullopt, "bid removed (cancel works on bids too)");
 }
 
+// ---- fill-or-kill tests ------------------------------------------------
+
+static void test_fok_full_fill() {
+    std::cout << "test_fok_full_fill\n";
+    OrderBook book;
+    book.add_order(make(1, Side::Sell, 50, 5, OrderType::GoodTillCancel));
+    book.add_order(make(2, Side::Sell, 51, 3, OrderType::GoodTillCancel)); // 8 available <= 51
+    auto trades = book.add_order(make(3, Side::Buy, 51, 8, OrderType::FillOrKill));
+    check(trades.size() == 2,      "FOK fills fully across two levels");
+    check(total_qty(trades) == 8,  "8 units filled");
+    check(book.best_ask() == std::nullopt, "book fully consumed, nothing rests");
+}
+
+static void test_fok_kill_insufficient_qty() {
+    std::cout << "test_fok_kill_insufficient_qty\n";
+    OrderBook book;
+    book.add_order(make(1, Side::Sell, 50, 5, OrderType::GoodTillCancel));
+    book.add_order(make(2, Side::Sell, 51, 3, OrderType::GoodTillCancel)); // only 8 available
+    auto trades = book.add_order(make(3, Side::Buy, 51, 9, OrderType::FillOrKill)); // needs 9
+    check(trades.empty(),        "FOK killed (not enough liquidity) -> 0 trades");
+    check(book.best_ask() == 50, "book untouched: best ask still 50");
+    // Prove nothing was consumed: the full 8 is still matchable afterwards.
+    auto after = book.add_order(make(4, Side::Buy, 51, 8, OrderType::GoodTillCancel));
+    check(total_qty(after) == 8, "all 8 units still available after killed FOK");
+}
+
+static void test_fok_respects_limit_price() {
+    std::cout << "test_fok_respects_limit_price\n";
+    OrderBook book;
+    book.add_order(make(1, Side::Sell, 50, 5,  OrderType::GoodTillCancel));
+    book.add_order(make(2, Side::Sell, 55, 10, OrderType::GoodTillCancel)); // above the limit
+    // Need 8, but only 5 sits at a price <= 51; the 55 level must not count.
+    auto trades = book.add_order(make(3, Side::Buy, 51, 8, OrderType::FillOrKill));
+    check(trades.empty(),        "FOK killed: liquidity above limit price doesn't count");
+    check(book.best_ask() == 50, "book unchanged");
+}
+
+static void test_fok_sell_side() {
+    std::cout << "test_fok_sell_side\n";
+    OrderBook book;
+    book.add_order(make(1, Side::Buy, 50, 5, OrderType::GoodTillCancel));
+    book.add_order(make(2, Side::Buy, 49, 5, OrderType::GoodTillCancel));
+    auto trades = book.add_order(make(3, Side::Sell, 49, 8, OrderType::FillOrKill));
+    check(trades.size() == 2,      "FOK sell fills across bids");
+    check(total_qty(trades) == 8,  "8 units filled");
+    check(!trades.empty() && trades[0].price == 50, "highest bid (50) hit first");
+}
+
+// ---- immediate-or-cancel tests -----------------------------------------
+
+static void test_ioc_partial_then_discard() {
+    std::cout << "test_ioc_partial_then_discard\n";
+    OrderBook book;
+    book.add_order(make(1, Side::Sell, 50, 5, OrderType::GoodTillCancel));
+    auto trades = book.add_order(make(2, Side::Buy, 50, 8, OrderType::ImmediateOrCancel));
+    check(total_qty(trades) == 5, "IOC fills the 5 available");
+    check(book.best_ask() == std::nullopt, "resting sell fully consumed");
+    // The distinguishing property vs GTC: the unfilled 3 is NOT rested.
+    check(book.best_bid() == std::nullopt, "IOC remainder discarded, not rested");
+}
+
+static void test_ioc_respects_limit_price() {
+    std::cout << "test_ioc_respects_limit_price\n";
+    OrderBook book;
+    book.add_order(make(1, Side::Sell, 50, 5, OrderType::GoodTillCancel));
+    book.add_order(make(2, Side::Sell, 55, 5, OrderType::GoodTillCancel)); // above limit
+    auto trades = book.add_order(make(3, Side::Buy, 51, 8, OrderType::ImmediateOrCancel));
+    check(total_qty(trades) == 5, "IOC fills only what's <= its limit price");
+    check(book.best_ask() == 55, "the 55 level is left untouched");
+    check(book.best_bid() == std::nullopt, "no IOC remainder rested");
+}
+
+static void test_ioc_full_fill() {
+    std::cout << "test_ioc_full_fill\n";
+    OrderBook book;
+    book.add_order(make(1, Side::Sell, 50, 5, OrderType::GoodTillCancel));
+    book.add_order(make(2, Side::Sell, 51, 5, OrderType::GoodTillCancel));
+    auto trades = book.add_order(make(3, Side::Buy, 51, 8, OrderType::ImmediateOrCancel));
+    check(trades.size() == 2,     "IOC fills across two levels");
+    check(total_qty(trades) == 8, "8 units filled");
+    check(book.best_ask() == 51,  "2 units remain resting @ 51 (maker side)");
+}
+
+static void test_ioc_no_liquidity() {
+    std::cout << "test_ioc_no_liquidity\n";
+    OrderBook book;
+    auto trades = book.add_order(make(1, Side::Buy, 50, 5, OrderType::ImmediateOrCancel));
+    check(trades.empty(),                   "IOC on empty book -> 0 trades");
+    check(book.best_bid() == std::nullopt,  "nothing rested");
+}
+
 // ---- visual demo using print_book --------------------------------------
 
 static void demo_print_book() {
@@ -190,6 +281,14 @@ int main() {
     test_cancel_partially_filled();
     test_cancel_unknown_id_is_safe();
     test_cancel_bid_side();
+    test_fok_full_fill();
+    test_fok_kill_insufficient_qty();
+    test_fok_respects_limit_price();
+    test_fok_sell_side();
+    test_ioc_partial_then_discard();
+    test_ioc_respects_limit_price();
+    test_ioc_full_fill();
+    test_ioc_no_liquidity();
 
     std::cout << "\n"
               << (g_failures == 0 ? "ALL TESTS PASSED" : "FAILURES: " + std::to_string(g_failures))

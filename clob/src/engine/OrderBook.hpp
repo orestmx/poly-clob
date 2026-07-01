@@ -37,6 +37,8 @@ namespace clob
             // Logic dispachers
             std::vector<Trade> execute_gtc_order(OrderPointer order);
             std::vector<Trade> execute_market_order(OrderPointer order);
+            std::vector<Trade> execute_fok_order(OrderPointer order);
+            std::vector<Trade> execute_ioc_order(OrderPointer order);
             std::vector<Trade> match_against_book(OrderPointer order);
 
             template <typename BookSide>
@@ -47,5 +49,10 @@ namespace clob
 
             template <typename BookSide>
             void remove_order(const OrderEntry& entry, BookSide& book);
+
+            template <typename BookSide>
+            bool has_liquidity(const OrderPointer& order, const BookSide& book) const;
+
+            bool can_fully_fill(const OrderPointer& order) const;
     };
 }
