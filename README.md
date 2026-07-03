@@ -79,3 +79,6 @@ make clean      # removes binaries and object files
 - [ ] **Polymarket adapter** — replay recorded L2 data into the engine.
 - [ ] **Market-making test harness** — a `Strategy` interface and backtest loop with PnL / inventory / fill metrics.
 - [ ] **Benchmarks** — orders per second.
+- [ ] **Simulations** - simulate realistic order flow
+- [ ] **Time latency** - add time lag to simulate connection lag. Should be fixed with occasional drops
+- [ ] **PnL tracking dashboard** - for an overview when testing MM bots, displaying key metrics

@@ -20,6 +20,11 @@ namespace clob
             Quantity volume_at(Side side, Price price) const;
             void print_book() const;
 
+            Quantity resting_quantity() const;
+            std::size_t resting_order_count() const;
+
+            bool audit() const; // returns true if book is internally consistent
+
         private:
             // helper for the Id lookup map
             struct OrderEntry {

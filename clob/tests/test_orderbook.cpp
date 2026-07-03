@@ -1,3 +1,4 @@
+#include "gtest/gtest.h"
 #include <gtest/gtest.h>
 
 #include "engine/OrderBook.hpp"
@@ -306,4 +307,112 @@ TEST(OrderBook, CancelledOrderNoLongerMatches) {
     auto trades = book.add_order(make(2, Side::Buy, 100, 5));
     EXPECT_TRUE(trades.empty());                  // nothing to match
     EXPECT_EQ(book.best_bid(), 100);              // buy rests instead
+}
+
+TEST(OrderBook, RestingQuantity) {
+    OrderBook book;
+    book.add_order(make(1, Side::Sell, 100, 10));
+    book.add_order(make(2, Side::Sell, 99, 9));
+    book.add_order(make(3, Side::Buy, 98, 8));
+    book.add_order(make(4, Side::Buy, 97, 7));
+
+    EXPECT_EQ(book.resting_quantity(), 34);
+    EXPECT_EQ(book.resting_order_count(), 4);
+}
+
+TEST(OrderBook, RestingQuantityEmptyBookIsZero) {
+    OrderBook book;
+    EXPECT_EQ(book.resting_quantity(), 0);
+    EXPECT_EQ(book.resting_order_count(), 0);
+}
+
+TEST(OrderBook, RestingQuantityReflectsRemainingAfterFill) {
+    OrderBook book;
+    book.add_order(make(1, Side::Sell, 100, 10));   // rests: 10
+    book.add_order(make(2, Side::Buy,  100, 4));     // takes 4 -> maker has 6 left
+
+    // if the impl wrongly summed initial_quantity this would be 10
+    EXPECT_EQ(book.resting_quantity(), 6);
+    EXPECT_EQ(book.resting_order_count(), 1);
+}
+
+TEST(OrderBook, RestingQuantitySumsWithinAPriceLevel) {
+    OrderBook book;
+    book.add_order(make(1, Side::Buy, 50, 5));
+    book.add_order(make(2, Side::Buy, 50, 7));   // same price, two orders
+    EXPECT_EQ(book.resting_quantity(), 12);
+    EXPECT_EQ(book.resting_order_count(), 2);
+}
+
+TEST(OrderBook, RestingQuantityDropsAfterCancel) {
+    OrderBook book;
+    book.add_order(make(1, Side::Buy, 50, 5));
+    book.add_order(make(2, Side::Buy, 49, 7));
+    EXPECT_EQ(book.resting_quantity(), 12);
+    EXPECT_EQ(book.resting_order_count(), 2);
+
+    book.cancel_order(1);
+    EXPECT_EQ(book.resting_quantity(), 7);       // order 1's 5 removed
+    EXPECT_EQ(book.resting_order_count(), 1);
+}
+
+// ============================================================
+// audit() — the book stays internally consistent through the public API.
+// (These are all positive checks: reached via add/cancel, audit must stay true.)
+// ============================================================
+
+TEST(OrderBook, AuditTrueOnEmptyBook) {
+    OrderBook book;
+    EXPECT_TRUE(book.audit());
+}
+
+TEST(OrderBook, AuditTrueWithRestingBothSides) {
+    OrderBook book;
+    book.add_order(make(1, Side::Sell, 101, 5));
+    book.add_order(make(2, Side::Sell, 102, 5));
+    book.add_order(make(3, Side::Buy, 99, 5));
+    book.add_order(make(4, Side::Buy, 98, 5));
+    EXPECT_TRUE(book.audit());
+}
+
+TEST(OrderBook, AuditTrueAfterPartialFill) {
+    OrderBook book;
+    book.add_order(make(1, Side::Sell, 100, 10));
+    book.add_order(make(2, Side::Buy, 100, 4));   // maker left with 6 resting
+    EXPECT_TRUE(book.audit());
+}
+
+TEST(OrderBook, AuditTrueAfterFullFillEmptiesBook) {
+    OrderBook book;
+    book.add_order(make(1, Side::Sell, 100, 5));
+    book.add_order(make(2, Side::Buy, 100, 5));   // exact fill -> book empty
+    EXPECT_TRUE(book.audit());
+}
+
+TEST(OrderBook, AuditTrueAfterMultiLevelSweep) {
+    OrderBook book;
+    book.add_order(make(1, Side::Sell, 100, 5));
+    book.add_order(make(2, Side::Sell, 101, 5));
+    book.add_order(make(3, Side::Buy, 101, 8));   // sweeps 100, partially takes 101
+    EXPECT_TRUE(book.audit());
+}
+
+TEST(OrderBook, AuditTrueAfterCancels) {
+    OrderBook book;
+    book.add_order(make(1, Side::Buy, 50, 5));
+    book.add_order(make(2, Side::Buy, 50, 7));   // two at one level
+    book.add_order(make(3, Side::Sell, 60, 3));
+    book.cancel_order(1);                         // remove one of a level's two
+    book.cancel_order(3);                         // remove a whole level
+    book.cancel_order(999);                       // unknown id -> no-op
+    EXPECT_TRUE(book.audit());
+}
+
+TEST(OrderBook, AuditTrueWithMultipleOrdersPerLevel) {
+    OrderBook book;
+    book.add_order(make(1, Side::Buy, 50, 5));
+    book.add_order(make(2, Side::Buy, 50, 5));
+    book.add_order(make(3, Side::Buy, 50, 5));   // FIFO list of three at 50
+    book.add_order(make(4, Side::Sell, 51, 5));
+    EXPECT_TRUE(book.audit());
 }

@@ -204,4 +204,68 @@ namespace clob {
             std::cout << "  " << price << " x " << level_qty << "\n";
         }
     }
+
+    // ---------------- Helper functions for testing ----------------
+
+    Quantity OrderBook::resting_quantity() const {
+        Quantity total_qty = 0;
+        for (const auto& [price, level] : asks) {
+            for (const auto& o : level) total_qty += o->remaining_quantity;
+        }
+        for (const auto& [price, level] : bids) {
+            for (const auto& o : level) total_qty += o->remaining_quantity;
+        }
+        return total_qty;
+    }
+
+    std::size_t OrderBook::resting_order_count() const {
+        std::size_t total_cnt = 0;
+        for (const auto& [price, level] : asks) {
+            total_cnt += level.size();
+        }
+        for (const auto& [price, level] : bids) {
+            total_cnt += level.size();
+        }
+        return total_cnt;
+    }
+
+    bool OrderBook::audit() const {
+        // no cross of books
+        if ((!bids.empty() && !asks.empty()) && (bids.begin()->first >= asks.begin()->first)) return false;
+
+        // no gosts orders or levels
+        for (const auto& [price, level] : asks) {
+            if (level.empty()) return false;
+            for (const auto& o : level) {
+                if (!(o->remaining_quantity > 0)) return false;
+                if (o->price != price) return false;
+            }
+        }
+
+        for (const auto& [price, level] : bids) {
+            if (level.empty()) return false;
+            for (const auto& o : level) {
+                if (!(o->remaining_quantity > 0)) return false;
+                if (o->price != price) return false;
+            }
+        }
+
+        // in sync with id_map
+        if (resting_order_count() != id_map.size()) return false;
+        for (const auto& [id, entry] : id_map) {
+            if (entry.pointer->id != id) return false;
+
+            if (entry.pointer->side == Side::Buy) {
+                const auto& level = bids.find(entry.pointer->price);
+                if (level == bids.end()) return false;
+                if (*entry.position != entry.pointer) return false;
+            } else {
+                const auto& level = asks.find(entry.pointer->price);
+                if (level == asks.end()) return false;
+                if (*entry.position != entry.pointer) return false;
+            }
+        }
+
+        return true;
+    }
 }
