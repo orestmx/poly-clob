@@ -36,7 +36,11 @@ if(CLOB_BUILD_TESTS)
 
     enable_testing()
 
-    add_executable(unit_tests tests/test_orderbook.cpp)
+    add_executable(unit_tests
+        tests/test_orderbook.cpp
+        tests/test_fuzz.cpp
+        tests/support/OrderFlowGenerator.cpp)
+    target_include_directories(unit_tests PRIVATE tests)
     target_link_libraries(unit_tests PRIVATE clob_engine GTest::gtest_main)
 
     include(GoogleTest)
