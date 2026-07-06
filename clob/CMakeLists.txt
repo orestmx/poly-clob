@@ -46,3 +46,14 @@ if(CLOB_BUILD_TESTS)
     include(GoogleTest)
     gtest_discover_tests(unit_tests)
 endif()
+
+# ---- Benchmark (Release-only; off by default) ----
+option(CLOB_BUILD_BENCH "Build the benchmark" OFF)
+
+if(CLOB_BUILD_BENCH)
+    add_executable(bench
+        bench/bench_orderbook.cpp
+        tests/support/OrderFlowGenerator.cpp)
+    target_link_libraries(bench PRIVATE clob_engine)
+    target_include_directories(bench PRIVATE tests)   # reuse OrderFlowGenerator
+endif()

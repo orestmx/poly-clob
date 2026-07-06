@@ -58,7 +58,7 @@ TEST(Fuzz, InvariantsHoldUnderRandomFlow) {
             }
 
             if (a.order.type == OrderType::GoodTillCancel && a.order.initial_quantity - traded > 0) {
-            shadow[a.order.id] = a.order.initial_quantity - traded;
+                shadow[a.order.id] = a.order.initial_quantity - traded;
             }
         } else {
             book.cancel_order(a.cancel_id);

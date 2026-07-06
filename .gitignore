@@ -11,8 +11,9 @@
 
 # Built binary from the Makefile
 /clob/simulator
-# Generic build output directories (CMake, etc.)
-build/
+# Generic build output directories (CMake, etc.) -- catches build/, build-rel/,
+# build-debug/, build-profile/, etc.
+build*/
 cmake-build-*/
 
 # CMake generated files
