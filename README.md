@@ -35,6 +35,8 @@ emphasis on:
 
 ```
 clob/
+├── CMakeLists.txt                      # CMake build (app + tests + optional bench)
+├── Makefile                            # lightweight build for quick engine iteration
 ├── src/
 │   ├── main.cpp                        # demo entry point
 │   └── engine/

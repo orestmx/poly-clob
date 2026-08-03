@@ -9,8 +9,9 @@
 *.dll
 *.exe
 
-# Built binary from the Makefile
+# Built binaries from the Makefile
 /clob/simulator
+/clob/run_tests
 # Generic build output directories (CMake, etc.) -- catches build/, build-rel/,
 # build-debug/, build-profile/, etc.
 build*/
