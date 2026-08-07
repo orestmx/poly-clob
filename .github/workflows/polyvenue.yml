@@ -1,0 +1,39 @@
+name: polyvenue
+
+on:
+  push:
+    branches: [ main, dev ]
+    paths:
+      - 'polyvenue/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - '.github/workflows/polyvenue.yml'
+  pull_request:
+    paths:
+      - 'polyvenue/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - '.github/workflows/polyvenue.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.11 is poly's interpreter, 3.12 is poly-bot's. Both consumers import
+        # this package, so both are tested -- 3.11 is what enforces the floor in
+        # pyproject.toml's requires-python.
+        python: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Sync
+        run: uv sync --python ${{ matrix.python }}
+
+      - name: Test
+        run: uv run pytest -q
