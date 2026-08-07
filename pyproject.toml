@@ -1,0 +1,25 @@
+[project]
+name = "polyvenue"
+version = "0.1.0"
+description = "Polymarket venue library and replay/sim harness."
+readme = "README.md"
+license = { file = "LICENSE" }
+# 3.11 is poly's interpreter and 3.12 is poly-bot's; this has to import under both,
+# so the floor tracks the lower one. Raising it breaks the normalizer.
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# Ships the Python package only. clob/ is the C++ engine and builds via its own
+# Makefile/CMake -- the two halves are independent (README §"two halves").
+packages = ["polyvenue"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
