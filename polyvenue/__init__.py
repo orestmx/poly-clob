@@ -1,4 +1,17 @@
 from polyvenue.book import Book, replay_market
+from polyvenue.domain import (
+    MILS_PER_UNIT,
+    ceil_to_grid,
+    complement,
+    floor_to_grid,
+    is_on_grid,
+    is_tradeable,
+    lots_to_shares,
+    shares_to_lots,
+    tick_to_mils,
+    to_decimal,
+    to_mils,
+)
 from polyvenue.events import (
     AnyEvent,
     BookSnapshot,
@@ -18,6 +31,18 @@ from polyvenue.events import (
 __all__ = [
     "Book",
     "replay_market",
+    # domain
+    "MILS_PER_UNIT",
+    "to_mils",
+    "to_decimal",
+    "tick_to_mils",
+    "floor_to_grid",
+    "ceil_to_grid",
+    "is_on_grid",
+    "complement",
+    "is_tradeable",
+    "lots_to_shares",
+    "shares_to_lots",
     # events
     "Event",
     "Side",
